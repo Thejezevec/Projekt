@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 
-{% block title %}Detail projektu{% endblock %}
+{% block title %}Project detail{% endblock %}
 
 {% block content %}
 <div class="container">
-    <h1>Projekt: {{ project.name }}</h1>
+    <h1>Project: {{ project.name }}</h1>
     <p>{{ project.description }}</p>
-    <p>Vytvořen: {{ project.created_at|date:"d.m.Y H:i" }}</p>
+    <p>Created: {{ project.created_at|date:"d.m.Y H:i" }}</p>
     
-    <h2>Podprojekty</h2>
+    <h2>Subprojects</h2>
     {% if subprojects %}
       <ul>
         {% for sub in subprojects %}
@@ -18,10 +18,10 @@
         {% endfor %}
       </ul>
     {% else %}
-      <p>Žádné podprojekty.</p>
+      <p>No subprojects.</p>
     {% endif %}
 
-    <h2>Úkoly</h2>
+    <h2>Tasks</h2>
     {% if tasks %}
       <ul>
         {% for task in tasks %}
@@ -29,9 +29,9 @@
         {% endfor %}
       </ul>
     {% else %}
-      <p>Žádné úkoly.</p>
+      <p>No tasks.</p>
     {% endif %}
 
-    <a href="{% url 'dashboard' %}"><button>Zpět na dashboard</button></a>
+    <a href="{% url 'dashboard' %}"><button>Back to dashboard</button></a>
 </div>
 {% endblock %}

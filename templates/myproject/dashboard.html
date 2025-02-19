@@ -4,25 +4,25 @@
 
 {% block content %}
 <div class="container">
-    <h1>Vítejte, {{ user.username }}!</h1>
-    <a href="{% url 'logout' %}"><button>Odhlásit se</button></a>
+    <h1>Welcome, {{ user.username }}!</h1>
+    <a href="{% url 'logout' %}"><button>Log Out</button></a>
 
-    <h2>Vaše projekty</h2>
+    <h2>Your projects</h2>
     {% if projects %}
         <ul>
             {% for project in projects %}
                 <li>
                     <a href="{% url 'project_detail' project.id %}">{{ project.name }}</a>
-                    <small>(Vytvořen: {{ project.created_at|date:"d.m.Y H:i" }})</small>
+                    <small>(Created: {{ project.created_at|date:"d.m.Y H:i" }})</small>
                 </li>
             {% endfor %}
         </ul>
     {% else %}
-        <p>Nemáte žádné projekty.</p>
+        <p>You haven't any projects.</p>
     {% endif %}
 
     <a href="{% url 'create_project' %}">
-        <button>Vytvořit nový projekt</button>
+        <button>Create new project</button>
     </a>
 </div>
 {% endblock %}
