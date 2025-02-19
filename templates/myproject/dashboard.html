@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Vítejte, {{ user.username }}!</h1>
+    <a href="{% url 'logout' %}"><button>Odhlásit se</button></a>
+
+    <h2>Vaše projekty</h2>
+    {% if projects %}
+        <ul>
+            {% for project in projects %}
+                <li>
+                    <a href="{% url 'project_detail' project.id %}">{{ project.name }}</a>
+                    <small>(Vytvořen: {{ project.created_at|date:"d.m.Y H:i" }})</small>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Nemáte žádné projekty.</p>
+    {% endif %}
+
+    <a href="{% url 'create_project' %}">
+        <button>Vytvořit nový projekt</button>
+    </a>
+</div>
+{% endblock %}
