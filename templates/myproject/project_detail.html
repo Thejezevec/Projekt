@@ -32,6 +32,10 @@
       <p>No tasks.</p>
     {% endif %}
 
+    <a href="{% url 'create_task' project.id %}">
+      <button>Create new task</button>
+    </a>
+
     <a href="{% url 'dashboard' %}"><button>Back to dashboard</button></a>
 </div>
 {% endblock %}

@@ -16,16 +16,20 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from modely import views
+from modely import views as modely_views
+from taskapp import views as taskapp_views
 
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path("", views.login_view, name="login"),
-    path("register/", views.register_view, name="register"),
-    path("logout/", views.logout_view, name="logout"),
-    path("dashboard/", views.dashboard_view, name="dashboard"),
-    path("project/<int:project_id>/", views.project_detail_view, name="project_detail"),
-    path("project/new/", views.create_project_view, name="create_project"),
+    path("", modely_views.login_view, name="login"),
+    path("register/", modely_views.register_view, name="register"),
+    path("logout/", modely_views.logout_view, name="logout"),
+    path("dashboard/", modely_views.dashboard_view, name="dashboard"),
+    path("project/<int:project_id>/", modely_views.project_detail_view, name="project_detail"),
+    path("project/new/", modely_views.create_project_view, name="create_project"),
+    path("project/<int:project_id>/task/new/", taskapp_views.create_task_view, name="create_task"),
+    path("task/<int:task_id>/", taskapp_views.task_detail_view, name="task_detail"),
+    path("task/<int:task_id>/claim/", taskapp_views.claim_task_view, name="claim_task"),
 ]

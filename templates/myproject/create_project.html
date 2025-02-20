@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 
-{% block title %}Vytvořit nový projekt{% endblock %}
+{% block title %}Create new project{% endblock %}
 
 {% block content %}
 <div class="container">
-    <h1>Vytvořit nový projekt</h1>
+    <h1>Create new project</h1>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit">Vytvořit projekt</button>
+        <button type="submit">Create project</button>
     </form>
-    <a href="{% url 'dashboard' %}">Zpět na dashboard</a>
+    <a href="{% url 'dashboard' %}">Back to dashboard</a>
 </div>
 {% endblock %}
