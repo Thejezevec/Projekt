@@ -26,7 +26,6 @@
       <table border="1" cellspacing="0" cellpadding="5">
         <thead>
           <tr>
-            <!-- Odkazy pro řazení: když klikneš, přidá se query parametr "sort" -->
             <th><a href="?sort=name">Name</a></th>
             <th><a href="?sort=priority">Priority</a></th>
             <th><a href="?sort=deadline">Deadline</a></th>
@@ -37,7 +36,6 @@
         <tbody>
           {% for task in tasks %}
           <tr>
-            <!-- Název úkolu jako odkaz na detail úkolu -->
             <td><a href="{% url 'task_detail' task.id %}">{{ task.name }}</a></td>
             <td>
               {% if task.priority == 3 %}
