@@ -23,14 +23,49 @@
 
     <h2>Tasks</h2>
     {% if tasks %}
-      <ul>
-        {% for task in tasks %}
-          <li>{{ task.name }} - {{ task.get_status_display }}</li>
-        {% endfor %}
-      </ul>
+      <table border="1" cellspacing="0" cellpadding="5">
+        <thead>
+          <tr>
+            <!-- Odkazy pro řazení: když klikneš, přidá se query parametr "sort" -->
+            <th><a href="?sort=name">Name</a></th>
+            <th><a href="?sort=priority">Priority</a></th>
+            <th><a href="?sort=deadline">Deadline</a></th>
+            <th><a href="?sort=status">Status</a></th>
+            <th><a href="?sort=assigned_user">Assigned User</a></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for task in tasks %}
+          <tr>
+            <!-- Název úkolu jako odkaz na detail úkolu -->
+            <td><a href="{% url 'task_detail' task.id %}">{{ task.name }}</a></td>
+            <td>
+              {% if task.priority == 3 %}
+                 <span style="color: red;">High</span>
+              {% elif task.priority == 2 %}
+                 <span style="color: orange;">Medium</span>
+              {% else %}
+                 <span style="color: green;">Low</span>
+              {% endif %}
+            </td>
+            <td>{{ task.deadline|date:"d.m.Y H:i" }}</td>
+            <td>{{ task.get_status_display }}</td>
+            <td>
+               {% if task.assigned_user %}
+                 {{ task.assigned_user.username }}
+               {% else %}
+                 None
+               {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+     </table>
     {% else %}
       <p>No tasks.</p>
     {% endif %}
+
+    <br>
 
     <a href="{% url 'create_task' project.id %}">
       <button>Create new task</button>

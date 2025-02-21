@@ -10,7 +10,7 @@
     <p><strong>Deadline:</strong> {{ task.deadline|date:"d.m.Y H:i" }}</p> 
     <p><strong>Priority:</strong> {{ task.get_priority_display }}</p> 
     <p><strong>Status:</strong> {{ task.get_status_display }}</p> 
-    <a href="{% url 'claim_task' task.id %}"><button>Přebrat úkol</button></a>
+    <a href="{% url 'claim_task' task.id %}"><button>Take over the task</button></a>
 
     <a href="{% url 'project_detail' task.project.id %}"><button>Back to project</button></a>
 </div>
