@@ -5,6 +5,7 @@ from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.decorators import login_required
 from django import forms
 from .models import User, Project, Task, Comment, Tag, ProjectMembership
+from django.core.exceptions import ValidationError
 
 def login_view(request):            #login
     if request.method == "POST":
@@ -59,23 +60,28 @@ def dashboard_view(request):
     projects = user.projects.filter(parent_project__isnull=True)
     return render(request, "myproject/dashboard.html", {"projects": projects, "user": user})
 
-@login_required
 def project_detail_view(request, project_id):
     project = get_object_or_404(Project, id=project_id)
-    membership = ProjectMembership.objects.filter(user=request.user, project=project).first()
-    if not membership:
-        return render(request, "myproject/no_access.html")  
+    members = ProjectMembership.objects.filter(project=project)
+    
+    sort_option = request.GET.get('sort', 'created_at') 
 
-    subprojects = Project.objects.filter(parent_project=project)
-    tasks = project.tasks.all()
-    members = ProjectMembership.objects.filter(project=project)  
+    sort_mapping = {
+        'name': 'name',
+        'priority': '-priority', 
+        'deadline': 'deadline',
+        'status': 'status',
+        'assigned_user': 'assigned_user__username',
+        'created_at': '-created_at',  
+    }
+
+    tasks = Task.objects.filter(project=project).order_by(sort_mapping.get(sort_option, '-created_at'))
 
     return render(request, "myproject/project_detail.html", {
         "project": project,
-        "subprojects": subprojects,
         "tasks": tasks,
         "members": members,
-        "membership": membership
+        "sort_option": sort_option, 
     })
 
 class ProjectForm(forms.ModelForm):
@@ -126,3 +132,41 @@ def invite_user_view(request, project_id):
         form = InviteUserForm()
 
     return render(request, "myproject/invite_user.html", {"form": form, "project": project})    
+
+def add_project_member(user, project, role):
+    if role == 'leader':
+        if ProjectMembership.objects.filter(project=project, role='leader').exists():
+            raise ValidationError("Leader already exists!")
+    
+    ProjectMembership.objects.create(user=user, project=project, role=role)
+
+def change_project_leader(project, new_leader):
+    old_leader = ProjectMembership.objects.filter(project=project, role='leader').first()
+    
+    if old_leader:
+        old_leader.role = 'worker'
+        old_leader.save()
+
+    add_project_member(new_leader, project, 'leader')
+
+@login_required
+def invite_user_view(request, project_id):
+    project = get_object_or_404(Project, id=project_id)
+
+    if not request.user.projectmembership_set.filter(project=project, role__in=['admin', 'leader']).exists():
+        return HttpResponseForbidden("You do not have permission to add users.")
+
+    if request.method == "POST":
+        form = InviteUserForm(request.POST)
+        if form.is_valid():
+            user = form.cleaned_data['user']
+            role = form.cleaned_data['role']
+            try:
+                add_project_member(user, project, role)
+                messages.success(request, f"User {user.username} was added to project as {role}.")
+            except ValidationError as e:
+                messages.error(request, str(e))
+        return redirect("project_detail", project_id=project.id)
+
+    form = InviteUserForm()
+    return render(request, "myproject/invite_user.html", {"form": form, "project": project})

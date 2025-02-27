@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Invite User{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Invite User to Project: {{ project.name }}</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Invite</button>
+    </form>
+
+    <a href="{% url 'project_detail' project.id %}"><button>Back to Project</button></a>
+</div>
+{% endblock %}

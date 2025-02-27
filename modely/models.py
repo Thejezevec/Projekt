@@ -90,6 +90,13 @@ class ProjectMembership(models.Model):
     
     class Meta:
         unique_together = ('user', 'project')
+        constraints = [
+            models.UniqueConstraint(
+                fields=['project'],
+                condition=models.Q(role='leader'),
+                name='unique_project_leader'
+            )
+        ]
 
     def __str__(self):
         return f"{self.user} in {self.project} as {self.get_role_display()}"

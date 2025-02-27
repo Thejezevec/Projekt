@@ -8,18 +8,29 @@
     <a href="{% url 'logout' %}"><button>Log Out</button></a>
 
     <h2>Your projects</h2>
+
     {% if projects %}
-        <ul>
-            {% for project in projects %}
-                <li>
-                    <a href="{% url 'project_detail' project.id %}">{{ project.name }}</a>
-                    <small>(Created: {{ project.created_at|date:"d.m.Y H:i" }})</small>
-                </li>
-            {% endfor %}
-        </ul>
+        <table border="1" cellspacing="0" cellpadding="5">
+            <thead>
+                <tr>
+                    <th>Project Name</th>
+                    <th>Created At</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for project in projects %}
+                <tr>
+                    <td><a href="{% url 'project_detail' project.id %}">{{ project.name }}</a></td>
+                    <td>{{ project.created_at|date:"d.m.Y H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     {% else %}
-        <p>You haven't any projects.</p>
+        <p>You don't have any projects.</p>
     {% endif %}
+
+    <br>
 
     <a href="{% url 'create_project' %}">
         <button>Create new project</button>

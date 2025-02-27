@@ -2,6 +2,8 @@
 
 {% block title %}Project detail{% endblock %}
 
+
+
 {% block content %}
 <div class="container">
     <h1>Project: {{ project.name }}</h1>
@@ -28,11 +30,11 @@
               <table border="1" cellspacing="0" cellpadding="5">
                 <thead>
                   <tr>
-                    <th><a href="?sort=name">Name</a></th>
-                    <th><a href="?sort=priority">Priority</a></th>
-                    <th><a href="?sort=deadline">Deadline</a></th>
-                    <th><a href="?sort=status">Status</a></th>
-                    <th><a href="?sort=assigned_user">Assigned User</a></th>
+                    <th><a href="?sort=name" {% if sort_option == "name" %}style="font-weight: bold;"{% endif %}>Name</a></th>
+                    <th><a href="?sort=priority" {% if sort_option == "priority" %}style="font-weight: bold;"{% endif %}>Priority</a></th>
+                    <th><a href="?sort=deadline" {% if sort_option == "deadline" %}style="font-weight: bold;"{% endif %}>Deadline</a></th>
+                    <th><a href="?sort=status" {% if sort_option == "status" %}style="font-weight: bold;"{% endif %}>Status</a></th>
+                    <th><a href="?sort=assigned_user" {% if sort_option == "assigned_user" %}style="font-weight: bold;"{% endif %}>Assigned User</a></th>
                   </tr>
                 </thead>
                 <tbody>
