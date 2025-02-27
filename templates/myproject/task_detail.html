@@ -5,13 +5,137 @@
 {% block content %}
 <div class="container">
     <h1>Task: {{ task.name }}</h1>
-    <p><strong>Task description:</strong> {{ Task.description }}</p>
-    <p><strong>Assigned user:</strong> {{ task.assigned_user }}</p> 
-    <p><strong>Deadline:</strong> {{ task.deadline|date:"d.m.Y H:i" }}</p> 
-    <p><strong>Priority:</strong> {{ task.get_priority_display }}</p> 
-    <p><strong>Status:</strong> {{ task.get_status_display }}</p> 
-    <a href="{% url 'claim_task' task.id %}"><button>Take over the task</button></a>
+    <p><strong>Detail:</strong> {{ task.description }}</p>
+    <p><strong>Assigned user:</strong> 
+       {% if task.assigned_user %}{{ task.assigned_user.username }}{% else %}Unassigned{% endif %}
+    </p>
+    <p><strong>Deadline:</strong> {{ task.deadline|date:"d.m.Y H:i" }}</p>
+    <p><strong>Priority:</strong> {{ task.get_priority_display }}</p>
+    <p><strong>Status:</strong> {{ task.get_status_display }}</p>
 
-    <a href="{% url 'project_detail' task.project.id %}"><button>Back to project</button></a>
+    {% if can_edit_task %}
+        <hr>
+        <h2>Edit Task</h2>
+        <form method="post" action="{% url 'edit_task' task.id %}">
+            {% csrf_token %}
+            
+            <label for="status">Status:</label>
+            <select name="status">
+                {% for value, label in task.Status_list %}
+                    <option value="{{ value }}" {% if task.status == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <label for="priority">Priority:</label>
+            <select name="priority">
+                {% for value, label in task.Priority_list %}
+                    <option value="{{ value }}" {% if task.priority == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            {% if can_change_assignment %}
+                <label for="deadline">Deadline:</label>
+                <input type="datetime-local" name="deadline" value="{{ task.deadline|date:'Y-m-d\TH:i' }}">
+
+                <label for="assigned_user">Assign User:</label>
+                <select name="assigned_user">
+                    <option value="">-- Select User --</option>
+                    {% for member in task.project.projectmembership_set.all %}
+                        <option value="{{ member.user.id }}" {% if task.assigned_user == member.user %}selected{% endif %}>
+                            {{ member.user.username }}
+                        </option>
+                    {% endfor %}
+                </select>
+            {% endif %}
+            
+            <button type="submit">Save Changes</button>
+        </form>
+    {% endif %}
+
+    <hr>
+
+    <h2>Tags</h2>
+    {% if task.tags.all %}
+      <ul>
+        {% for tag in task.tags.all %}
+          <li>{{ tag.name }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No tags.</p>
+    {% endif %}
+    
+    {% if can_edit_task %}
+        <button id="showTagFormBtn" onclick="toggleTagForm()">Add tag</button>
+        <div id="tagFormContainer" style="display: none;">
+          <form method="post" action="{% url 'add_tag_to_task' task.id %}">
+            {% csrf_token %}
+            <p>
+              <label for="id_new_tag">New tag:</label>
+              <input type="text" name="new_tag" id="id_new_tag">
+            </p>
+            <p>
+              <label for="id_existing_tag">Choose existing:</label>
+              <select name="existing_tag" id="id_existing_tag">
+                <option value="">-- Choose --</option>
+                {% for tag in tag_form.fields.existing_tag.queryset %}
+                  <option value="{{ tag.id }}">{{ tag.name }}</option>
+                {% endfor %}
+              </select>
+            </p>
+            <button type="submit">Save tag</button>
+          </form>
+        </div>
+    {% endif %}
+
+    <hr>
+
+    <h2>Comments</h2>
+    {% if task.comments.all %}
+      <div class="comments">
+        {% for comment in task.comments.all %}
+          <div class="comment">
+            <p>
+                <strong>
+                  {% if comment.author %}
+                    {{ comment.author.username }}
+                  {% else %}
+                    none
+                  {% endif %}
+                </strong>: {{ comment.text }}
+              </p>              
+            <p class="timestamp">{{ comment.created_at|date:"d.m.Y H:i" }}</p>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p>No comments yet.</p>
+    {% endif %}
+
+    <h3>Add comment</h3>
+    <form method="post" action="{% url 'add_comment_to_task' task.id %}">
+      {% csrf_token %}
+      {{ comment_form.as_p }}
+      <button type="submit">Send comment</button>
+    </form>
+
+    <br>
+    <a href="{% url 'project_detail' task.project.id %}"><button>Back to project details</button></a>
 </div>
+
+<script>
+function toggleTagForm() {
+    var container = document.getElementById("tagFormContainer");
+    if (container.style.display === "none") {
+        container.style.display = "block";
+    } else {
+        container.style.display = "none";
+    }
+}
+</script>
+
 {% endblock %}

@@ -8,67 +8,83 @@
     <p>{{ project.description }}</p>
     <p>Created: {{ project.created_at|date:"d.m.Y H:i" }}</p>
     
-    <h2>Subprojects</h2>
-    {% if subprojects %}
-      <ul>
-        {% for sub in subprojects %}
-          <li>
-            <a href="{% url 'project_detail' sub.id %}">{{ sub.name }}</a>
-          </li>
-        {% endfor %}
-      </ul>
-    {% else %}
-      <p>No subprojects.</p>
-    {% endif %}
+    <div class="content-wrapper">
+        <div class="left-column">
+            <h2>Subprojects</h2>
+            {% if subprojects %}
+              <ul>
+                {% for sub in subprojects %}
+                  <li>
+                    <a href="{% url 'project_detail' sub.id %}">{{ sub.name }}</a>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p>No subprojects.</p>
+            {% endif %}
 
-    <h2>Tasks</h2>
-    {% if tasks %}
-      <table border="1" cellspacing="0" cellpadding="5">
-        <thead>
-          <tr>
-            <th><a href="?sort=name">Name</a></th>
-            <th><a href="?sort=priority">Priority</a></th>
-            <th><a href="?sort=deadline">Deadline</a></th>
-            <th><a href="?sort=status">Status</a></th>
-            <th><a href="?sort=assigned_user">Assigned User</a></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for task in tasks %}
-          <tr>
-            <td><a href="{% url 'task_detail' task.id %}">{{ task.name }}</a></td>
-            <td>
-              {% if task.priority == 3 %}
-                 <span style="color: red;">High</span>
-              {% elif task.priority == 2 %}
-                 <span style="color: orange;">Medium</span>
-              {% else %}
-                 <span style="color: green;">Low</span>
-              {% endif %}
-            </td>
-            <td>{{ task.deadline|date:"d.m.Y H:i" }}</td>
-            <td>{{ task.get_status_display }}</td>
-            <td>
-               {% if task.assigned_user %}
-                 {{ task.assigned_user.username }}
-               {% else %}
-                 None
-               {% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-     </table>
-    {% else %}
-      <p>No tasks.</p>
-    {% endif %}
+            <h2>Tasks</h2>
+            {% if tasks %}
+              <table border="1" cellspacing="0" cellpadding="5">
+                <thead>
+                  <tr>
+                    <th><a href="?sort=name">Name</a></th>
+                    <th><a href="?sort=priority">Priority</a></th>
+                    <th><a href="?sort=deadline">Deadline</a></th>
+                    <th><a href="?sort=status">Status</a></th>
+                    <th><a href="?sort=assigned_user">Assigned User</a></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for task in tasks %}
+                  <tr>
+                    <td><a href="{% url 'task_detail' task.id %}">{{ task.name }}</a></td>
+                    <td>
+                      {% if task.priority == 3 %}
+                         <span style="color: red;">High</span>
+                      {% elif task.priority == 2 %}
+                         <span style="color: orange;">Medium</span>
+                      {% else %}
+                         <span style="color: green;">Low</span>
+                      {% endif %}
+                    </td>
+                    <td>{{ task.deadline|date:"d.m.Y H:i" }}</td>
+                    <td>{{ task.get_status_display }}</td>
+                    <td>
+                       {% if task.assigned_user %}
+                         {{ task.assigned_user.username }}
+                       {% else %}
+                         None
+                       {% endif %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+             </table>
+            {% else %}
+              <p>No tasks.</p>
+            {% endif %}
+
+            <a href="{% url 'create_task' project.id %}">
+              <button>Create new task</button>
+            </a>
+        </div>
+
+        <div class="right-column">
+            <h2>Members</h2>
+            <ul>
+                {% for member in members %}
+                    <li>{{ member.user.username }} - <strong>{{ member.get_role_display }}</strong></li>
+                {% endfor %}
+            </ul>
+
+            {% if membership.is_admin_or_leader %}
+                <a href="{% url 'invite_user' project.id %}"><button>Invite Member</button></a>
+            {% endif %}
+        </div>
+    </div>
 
     <br>
-
-    <a href="{% url 'create_task' project.id %}">
-      <button>Create new task</button>
-    </a>
-
     <a href="{% url 'dashboard' %}"><button>Back to dashboard</button></a>
 </div>
 {% endblock %}

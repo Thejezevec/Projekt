@@ -1,9 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
 from django.contrib.auth import login, logout, authenticate, get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.decorators import login_required
-from .models import Project, Task
 from django import forms
+from .models import User, Project, Task, Comment, Tag, ProjectMembership
 
 def login_view(request):            #login
     if request.method == "POST":
@@ -61,9 +62,21 @@ def dashboard_view(request):
 @login_required
 def project_detail_view(request, project_id):
     project = get_object_or_404(Project, id=project_id)
+    membership = ProjectMembership.objects.filter(user=request.user, project=project).first()
+    if not membership:
+        return render(request, "myproject/no_access.html")  
+
     subprojects = Project.objects.filter(parent_project=project)
     tasks = project.tasks.all()
-    return render(request, "myproject/project_detail.html", {"project": project, "subprojects": subprojects, "tasks": tasks})
+    members = ProjectMembership.objects.filter(project=project)  
+
+    return render(request, "myproject/project_detail.html", {
+        "project": project,
+        "subprojects": subprojects,
+        "tasks": tasks,
+        "members": members,
+        "membership": membership
+    })
 
 class ProjectForm(forms.ModelForm):
     class Meta:
@@ -76,11 +89,40 @@ def create_project_view(request):
         form = ProjectForm(request.POST)
         if form.is_valid():
             project = form.save()
-            request.user.projects.add(project)
+            ProjectMembership.objects.create(user=request.user, project=project, role='leader')
             return redirect("dashboard")
     else:
         form = ProjectForm()
 
     return render(request, "myproject/create_project.html", {"form": form})
 
-    
+
+class InviteUserForm(forms.Form):
+    user = forms.ModelChoiceField(queryset=User.objects.all(), label="Select User")
+    role = forms.ChoiceField(choices=ProjectMembership.ROLE_CHOICES, label="Role")
+
+@login_required
+def invite_user_view(request, project_id):
+    project = get_object_or_404(Project, id=project_id)
+    membership = ProjectMembership.objects.filter(user=request.user, project=project).first()
+
+    if not membership or not membership.is_admin_or_leader():
+        return render(request, "myproject/no_access.html")
+
+    if request.method == "POST":
+        form = InviteUserForm(request.POST)
+        if form.is_valid():
+            user = form.cleaned_data["user"]
+            role = form.cleaned_data["role"]
+
+            if not ProjectMembership.objects.filter(user=user, project=project).exists():
+                ProjectMembership.objects.create(user=user, project=project, role=role)
+                messages.success(request, f"User {user.username} added to project.")
+            else:
+                messages.error(request, "User is already in this project.")
+
+            return redirect("project_detail", project_id=project.id)
+    else:
+        form = InviteUserForm()
+
+    return render(request, "myproject/invite_user.html", {"form": form, "project": project})    

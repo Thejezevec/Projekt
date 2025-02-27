@@ -32,4 +32,9 @@ urlpatterns = [
     path("project/<int:project_id>/task/new/", taskapp_views.create_task_view, name="create_task"),
     path("task/<int:task_id>/", taskapp_views.task_detail_view, name="task_detail"),
     path("task/<int:task_id>/claim/", taskapp_views.claim_task_view, name="claim_task"),
+    path('task/<int:task_id>/add_tag/', taskapp_views.add_tag_to_task, name='add_tag_to_task'),
+    path('task/<int:task_id>/add_comment/', taskapp_views.add_comment_to_task, name='add_comment_to_task'),
+    path("task/<int:task_id>/edit/", taskapp_views.edit_task_view, name="edit_task"),
+    path("project/<int:project_id>/invite/", modely_views.invite_user_view, name="invite_user"),
+
 ]

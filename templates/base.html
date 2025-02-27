@@ -1,17 +1,92 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Task  Manager {% endblock %}</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}">
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; padding: 20px; }
-        .container { max-width: 400px; margin: auto; text-align: center; }
-        button { background-color: #28a745; color: white; padding: 10px; border: none; cursor: pointer; }
-        button:hover { background-color: #218838; }
+
+        .navbar {
+            background-color: #333;
+            overflow: hidden;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 15px;
+            font-size: 18px;
+        }
+        
+        .navbar a:hover {
+            background-color: #575757;
+            border-radius: 5px;
+        }
+
+        /* Night mode button */
+        .theme-toggle {
+            background-color: #444;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .theme-toggle:hover {
+            background-color: #555;
+        }
+
+        /* Night mode */
+        body.dark-mode {
+            background-color: #222;
+            color: white;
+        }
     </style>
 </head>
 <body>
-    {% block content %}{% endblock %}
+    <div class="navbar">
+        
+        <a href="{% url 'dashboard' %}">
+            {% if user.is_authenticated %}
+                Logged user: {{ user.username }}
+            {% else %}
+                visitor
+            {% endif %}
+        </a>
+
+        <div>
+            <button class="theme-toggle" onclick="toggleTheme()">🌙 Night mode</button>
+            {% if user.is_authenticated %}
+                <a href="{% url 'logout' %}">Log Out</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle("dark-mode");
+            let isDark = document.body.classList.contains("dark-mode");
+            localStorage.setItem("theme", isDark ? "dark" : "light");
+        }
+
+        window.onload = function () {
+            if (localStorage.getItem("theme") === "dark") {
+                document.body.classList.add("dark-mode");
+            }
+        }
+    </script>
 </body>
 </html>
