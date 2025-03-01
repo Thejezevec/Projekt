@@ -12,18 +12,28 @@
     
     <div class="content-wrapper">
         <div class="left-column">
-            <h2>Subprojects</h2>
-            {% if subprojects %}
-              <ul>
-                {% for sub in subprojects %}
-                  <li>
-                    <a href="{% url 'project_detail' sub.id %}">{{ sub.name }}</a>
-                  </li>
-                {% endfor %}
-              </ul>
-            {% else %}
+          <h2>Subprojects</h2>
+
+          {% if subprojects %}
+              <table border="1" cellspacing="0" cellpadding="5">
+                  <thead>
+                      <tr>
+                          <th>Project Name</th>
+                          <th>Created At</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      {% for sub in subprojects %}
+                      <tr>
+                          <td><a href="{% url 'project_detail' sub.id %}">{{ sub.name }}</a></td>
+                          <td>{{ sub.created_at|date:"d.m.Y H:i" }}</td>
+                      </tr>
+                      {% endfor %}
+                  </tbody>
+              </table>
+          {% else %}
               <p>No subprojects.</p>
-            {% endif %}
+          {% endif %}
 
             <h2>Tasks</h2>
             {% if tasks %}
@@ -88,5 +98,8 @@
 
     <br>
     <a href="{% url 'dashboard' %}"><button>Back to dashboard</button></a>
+    {% if membership.is_admin_or_leader %}
+    <a href="{% url 'invite_user' project.id %}"><button>Invite Member</button></a>
+    {% endif %}
 </div>
 {% endblock %}

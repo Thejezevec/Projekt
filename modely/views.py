@@ -74,6 +74,8 @@ def project_detail_view(request, project_id):
     """
     project = get_object_or_404(Project, id=project_id)
     members = ProjectMembership.objects.filter(project=project)
+    subprojects = Project.objects.filter(parent_project=project)
+    membership = ProjectMembership.objects.filter(user=request.user, project=project).first()
     
     sort_option = request.GET.get('sort', 'created_at') 
 
@@ -92,6 +94,8 @@ def project_detail_view(request, project_id):
         "project": project,
         "tasks": tasks,
         "members": members,
+        "subprojects": subprojects,
+        "membership": membership,
         "sort_option": sort_option, 
     })
 
@@ -118,42 +122,6 @@ def create_project_view(request):
 
     return render(request, "myproject/create_project.html", {"form": form})
 
-
-class InviteUserForm(forms.Form):
-    #Form for inviting a user to a project.
-    user = forms.ModelChoiceField(queryset=User.objects.all(), label="Select User")
-    role = forms.ChoiceField(choices=ProjectMembership.ROLE_CHOICES, label="Role")
-
-@login_required
-def invite_user_view(request, project_id):
-    """
-    Allows project admins and leaders to invite users to a project.
-    If a user is already in the project, an error message is displayed.
-    """
-    project = get_object_or_404(Project, id=project_id)
-    membership = ProjectMembership.objects.filter(user=request.user, project=project).first()
-
-    if not membership or not membership.is_admin_or_leader():
-        return render(request, "myproject/no_access.html")
-
-    if request.method == "POST":
-        form = InviteUserForm(request.POST)
-        if form.is_valid():
-            user = form.cleaned_data["user"]
-            role = form.cleaned_data["role"]
-
-            if not ProjectMembership.objects.filter(user=user, project=project).exists():
-                ProjectMembership.objects.create(user=user, project=project, role=role)
-                messages.success(request, f"User {user.username} added to project.")
-            else:
-                messages.error(request, "User is already in this project.")
-
-            return redirect("project_detail", project_id=project.id)
-    else:
-        form = InviteUserForm()
-
-    return render(request, "myproject/invite_user.html", {"form": form, "project": project})    
-
 def add_project_member(user, project, role):
     """
     Adds a user to a project with the specified role.
@@ -164,6 +132,52 @@ def add_project_member(user, project, role):
             raise ValidationError("Leader already exists!")
     
     ProjectMembership.objects.create(user=user, project=project, role=role)
+    membership, created = ProjectMembership.objects.get_or_create(user=user, project=project)
+    membership.role = role
+    membership.save()
+
+
+class InviteUserForm(forms.Form):
+    #Form for inviting a user to a project.
+    user = forms.ModelChoiceField(queryset=User.objects.all(), label="Select User")
+    role = forms.ChoiceField(choices=ProjectMembership.ROLE_CHOICES, label="Role")
+
+@login_required
+def invite_user_view(request, project_id):
+    """
+    Allows project admins and leaders to invite a user to a project.
+    Ensures only authorized users can add members.
+    """
+    project = get_object_or_404(Project, id=project_id)
+
+    # Check if user has permission (must be admin or leader)
+    membership = ProjectMembership.objects.filter(user=request.user, project=project).first()
+    if not membership or not membership.is_admin_or_leader():
+        return HttpResponseForbidden("You do not have permission to add users.")
+
+    if request.method == "POST":
+        form = InviteUserForm(request.POST)
+        if form.is_valid():
+            user = form.cleaned_data["user"]
+            role = form.cleaned_data["role"]
+
+            # Check if user is already in the project
+            if ProjectMembership.objects.filter(user=user, project=project).exists():
+                messages.error(request, "User is already in this project.")
+            else:
+                try:
+                    add_project_member(user, project, role)
+                    messages.success(request, f"User {user.username} was added to project as {role}.")
+                except ValidationError as e:
+                    messages.error(request, str(e))
+
+            return redirect("project_detail", project_id=project.id)
+
+    else:
+        form = InviteUserForm()
+
+    return render(request, "myproject/invite_user.html", {"form": form, "project": project})
+
 
 def change_project_leader(project, new_leader):
     """
@@ -177,29 +191,3 @@ def change_project_leader(project, new_leader):
         old_leader.save()
 
     add_project_member(new_leader, project, 'leader')
-
-@login_required
-def invite_user_view(request, project_id):
-    """
-    Allows project admins and leaders to invite a user to a project.
-    Ensures only authorized users can add members.
-    """
-    project = get_object_or_404(Project, id=project_id)
-
-    if not request.user.projectmembership_set.filter(project=project, role__in=['admin', 'leader']).exists():
-        return HttpResponseForbidden("You do not have permission to add users.")
-
-    if request.method == "POST":
-        form = InviteUserForm(request.POST)
-        if form.is_valid():
-            user = form.cleaned_data['user']
-            role = form.cleaned_data['role']
-            try:
-                add_project_member(user, project, role)
-                messages.success(request, f"User {user.username} was added to project as {role}.")
-            except ValidationError as e:
-                messages.error(request, str(e))
-        return redirect("project_detail", project_id=project.id)
-
-    form = InviteUserForm()
-    return render(request, "myproject/invite_user.html", {"form": form, "project": project})
