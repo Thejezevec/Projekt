@@ -112,3 +112,14 @@ def get_user_role(user, project):
 def is_admin_or_leader(self):
     return self.role in ['leader', 'admin']
 
+from django.core.exceptions import ValidationError
+
+def add_project_member(user, project, role):
+    
+    if role == 'leader':
+        if ProjectMembership.objects.filter(project=project, role='leader').exists():
+            raise ValidationError("Tento projekt již má leadera!")
+
+    membership, created = ProjectMembership.objects.get_or_create(user=user, project=project)
+    membership.role = role
+    membership.save()

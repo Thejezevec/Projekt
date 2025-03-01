@@ -7,7 +7,8 @@ from django import forms
 from .models import User, Project, Task, Comment, Tag, ProjectMembership
 from django.core.exceptions import ValidationError
 
-def login_view(request):            #login
+def login_view(request):            
+    #user login. If the login is successful, the user is redirected to the dashboard.
     if request.method == "POST":
         form = AuthenticationForm(data=request.POST)
         if form.is_valid():
@@ -22,6 +23,10 @@ def login_view(request):            #login
 User = get_user_model()
 
 class CustomUserCreationForm(UserCreationForm):
+    """
+    Custom user registration form.
+    Ensures that the username is unique (case-insensitive).
+    """
     class Meta:
         model = User
         fields = ("username", "password1", "password2")
@@ -35,6 +40,7 @@ class CustomUserCreationForm(UserCreationForm):
 
 
 def register_view(request):
+    #Handles user registration. If successful, logs in the new user and redirects to the dashboard.
     if request.method == "POST":
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
@@ -45,22 +51,27 @@ def register_view(request):
         form = CustomUserCreationForm()
     return render(request, "myproject/register.html", {"form": form})
 
-def logout_view(request):           #logout
+def logout_view(request):           #Logs out the user and redirects to the login page.
     logout(request)
     return redirect ("login")
 
 
-@login_required
-def dashboard_view(request):
-    return render(request, "myproject/dashboard.html")
 
 @login_required
 def dashboard_view(request):
+    """
+    Displays the dashboard for the logged-in user, listing projects where they are a member.
+    Only top-level projects (without a parent project) are shown.
+    """
     user = request.user
     projects = user.projects.filter(parent_project__isnull=True)
     return render(request, "myproject/dashboard.html", {"projects": projects, "user": user})
 
 def project_detail_view(request, project_id):
+    """
+    Displays the details of a project, including its tasks and members.
+    Supports sorting tasks by various attributes.
+    """
     project = get_object_or_404(Project, id=project_id)
     members = ProjectMembership.objects.filter(project=project)
     
@@ -85,12 +96,17 @@ def project_detail_view(request, project_id):
     })
 
 class ProjectForm(forms.ModelForm):
+    #Form for creating a new project.
     class Meta:
         model = Project
         fields = ["name", "description", "parent_project"]
 
 @login_required
 def create_project_view(request):
+    """
+    Handles the creation of a new project.
+    The requesting user is automatically assigned as the project leader.
+    """
     if request.method == "POST":
         form = ProjectForm(request.POST)
         if form.is_valid():
@@ -104,11 +120,16 @@ def create_project_view(request):
 
 
 class InviteUserForm(forms.Form):
+    #Form for inviting a user to a project.
     user = forms.ModelChoiceField(queryset=User.objects.all(), label="Select User")
     role = forms.ChoiceField(choices=ProjectMembership.ROLE_CHOICES, label="Role")
 
 @login_required
 def invite_user_view(request, project_id):
+    """
+    Allows project admins and leaders to invite users to a project.
+    If a user is already in the project, an error message is displayed.
+    """
     project = get_object_or_404(Project, id=project_id)
     membership = ProjectMembership.objects.filter(user=request.user, project=project).first()
 
@@ -134,6 +155,10 @@ def invite_user_view(request, project_id):
     return render(request, "myproject/invite_user.html", {"form": form, "project": project})    
 
 def add_project_member(user, project, role):
+    """
+    Adds a user to a project with the specified role.
+    Ensures that only one leader exists per project.
+    """
     if role == 'leader':
         if ProjectMembership.objects.filter(project=project, role='leader').exists():
             raise ValidationError("Leader already exists!")
@@ -141,6 +166,10 @@ def add_project_member(user, project, role):
     ProjectMembership.objects.create(user=user, project=project, role=role)
 
 def change_project_leader(project, new_leader):
+    """
+    Changes the project leader by demoting the current leader 
+    (if any) and assigning a new one.
+    """
     old_leader = ProjectMembership.objects.filter(project=project, role='leader').first()
     
     if old_leader:
@@ -151,6 +180,10 @@ def change_project_leader(project, new_leader):
 
 @login_required
 def invite_user_view(request, project_id):
+    """
+    Allows project admins and leaders to invite a user to a project.
+    Ensures only authorized users can add members.
+    """
     project = get_object_or_404(Project, id=project_id)
 
     if not request.user.projectmembership_set.filter(project=project, role__in=['admin', 'leader']).exists():
